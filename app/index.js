@@ -1,10 +1,12 @@
+const { response } = require('express');
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
 const port = 3000;
+const { querys } = require('./querys');
 
 
-const {getLibros} = require('./controladores');
+
 
 require('dotenv').config();
 
@@ -17,41 +19,134 @@ const connection = mysql.createConnection({
     database: process.env.database
 });
 
-connection.connect((error) =>{
-    if(error) throw error;
+connection.connect((error) => {
+    if (error) throw error;
     console.log('Conexion a la base de datos establecida');
 });
 
-app.listen(port, ()=>{
+app.listen(port, () => {
     console.log('Aplicacion ejecutandose en el puerto: ' + port);
 })
 
+//prueba de la api
+app.get('/', (req, res) => {
+    // res.send('Hola mundo')
+    res.json({id: 1, mensaje: "API corriendo correctamente"});
+});
 
 
-app.get('/libros',(request, response) => {
-    connection.query('SELECT * FROM LIBRO', (error, results) =>{
-        if(error){
+
+app.get('/libros', (request, response) => {
+    connection.query(querys.selectLibros, (error, results) => {
+        if (error) {
             throw error;
         }
         response.status(200).json(results);
     });
 });
 
-app.get('/getLibros', getLibros);
+//insertar un libro
+app.post('/insertLibro', (req, res) => {
+    const { nombre_libro,
+        autor_libro,
+        editorial,
+        isbm,
+        codigo_barras,
+        cantidad,
+        id_categoria,
+        cant_disponibles,
+        fecha_publicaion,
+        fecha_creacion } = req.body;
 
+    try {
+        connection.query(querys.inserLibro,
+            [nombre_libro,
+                autor_libro,
+                editorial,
+                isbm,
+                codigo_barras,
+                cantidad,
+                id_categoria,
+                cant_disponibles,
+                fecha_publicaion,
+                fecha_creacion],
+            (error, resultado) => {
+                if (error) {
+                    throw error
+                }
+                res.json('Producto insertado');
+            });
 
-// app.use(routes);
+    }
+    catch (error) {
+        console.log('no funciono');
+        res.status(500);
+        res.send(error.message);
+    }
+})
 
+//update a un libro
+app.put('/updateLibro', (request, res) => {
+    const {
+        nombre_libro,
+                autor_libro,
+                editorial,
+                isbm,
+                codigo_barras,
+                cantidad,
+                id_categoria,
+                cant_disponibles,
+                fecha_publicaion,
+                id_libro
+    } = request.body;
+    try{
+        connection.query(querys.updateLibro, [
+            nombre_libro,
+                    autor_libro,
+                    editorial,
+                    isbm,
+                    codigo_barras,
+                    cantidad,
+                    id_categoria,
+                    cant_disponibles,
+                    fecha_publicaion,
+                    id_libro
+        ], (error, resultado) =>{
+            if(error)
+            throw error
+    
+            res.status(200);
+            res.json({codigo: "1", mensaje: "Libro actualizado correctamente"});
+        });
 
-app.get('/', (req, res) =>{
-    res.send('Hola mundo')
+    } catch(error){
+        console.log('Error al hacer update al libro')
+        res.send(error);
+    }
 });
 
+//delete libro
+app.delete('/deleteLibro', (req, res) => {
+    const {id_libro} = req.body;
+    try{
 
-// app.use(routes);
+        connection.query(querys.deleteLibro, [id_libro], (err,response) =>{
+            if(err)
+            throw err
 
-// app.use(Routes);
+            res.json({id: 1, mesanje: "Libro eliminado correctamente"});
+        })
+
+    } catch(error){
+        console.log('Error update libro');
+        res.json({id: 0, mensaje: "No se pudo eliminar el libro"});
+    }
+})
+
+
+
 
 module.exports = {
-    connection}
+    connection
+}
 

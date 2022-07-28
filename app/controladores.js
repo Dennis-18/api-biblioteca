@@ -1,5 +1,5 @@
-const {connection} = require('./index');
 
+const connection = require('./index')
 
 const query = 'SELECT * FROM LIBRO';
 
