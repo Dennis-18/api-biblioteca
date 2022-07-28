@@ -1,8 +1,10 @@
-const { response } = require('express');
+// const { response } = require('express');
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
 const port = 3000;
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const { querys } = require('./querys');
 
 
@@ -11,6 +13,25 @@ const { querys } = require('./querys');
 require('dotenv').config();
 
 app.use(express.json());
+
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-COntrol-Allow-Request-Method');
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+//     res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+//     next();
+// });
+
+app.use(cors({
+    origin: "*",
+})
+);
+
+
+// app.all("*", (req, res, next) => {
+//     next(new AppError(`The URL ${req.originalUrl} does not exists`, 404));
+//    });
+
 
 const connection = mysql.createConnection({
     host: process.env.host,
@@ -31,7 +52,8 @@ app.listen(port, () => {
 //prueba de la api
 app.get('/', (req, res) => {
     // res.send('Hola mundo')
-    res.json({id: 1, mensaje: "API corriendo correctamente"});
+    // res.json({id: 1, mensaje: "API corriendo correctamente"});
+    res.json('Funciona');
 });
 
 
@@ -143,10 +165,14 @@ app.delete('/deleteLibro', (req, res) => {
     }
 })
 
-
-
-
-module.exports = {
-    connection
-}
+//get categorias
+app.get('/getCategorias', (req, res) => {
+    try{
+        connection.query(querys.getCategorias, (req, response) => {
+            res.json(response);
+        })
+    } catch(error){
+        console.log(error);
+    }
+})
 
