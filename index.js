@@ -32,4 +32,14 @@ app.post('/insertLibro', db.insertLibro)
 
 app.put('/updateLibro', db.updateLibro)
 
-app.delete('/deleteLibro', db.deleteLibro)
+app.post('/deleteLibro', db.deleteLibro)
+
+app.get('/getLibroNombre/:nombre_libro', db.selectNombreLibro)
+
+app.post('/insertPrestamo', db.insertPrestamo)
+
+app.post('/librosPrestados', db.selectLibrosPrestados)
+
+app.get('/todosPrestados', db.prestamos)
+
+app.put('/updateEstadoLibro', db.updateEstado)

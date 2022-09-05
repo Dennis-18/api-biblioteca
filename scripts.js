@@ -1,10 +1,17 @@
 const script = {
-    selectLibros: 'SELECT NOMBRE_LIBRO, AUTOR_LIBRO, EDITORIAL, DESCRIPCION AS CATEGORIA, ISBM, CODIGO_BARRAS, CANTIDAD FROM LIBRO AS LB JOIN CATEGORIAS AS CT ON LB.ID_CATEGORIA = CT.ID_CATEGORIA',
+    selectLibros: 'SELECT LB.ID_LIBRO, LB.NOMBRE_LIBRO, LB.AUTOR_LIBRO, LB.EDITORIAL , LB.ID_CATEGORIA , CT.DESCRIPCION AS CATEGORIA, LB.ISBM, LB.CODIGO_BARRAS, LB.CANTIDAD, LB.FECHA_PUBLICACION FROM LIBRO AS LB JOIN CATEGORIAS AS CT ON LB.ID_CATEGORIA = CT.ID_CATEGORIA',
     inserLibro: 'INSERT INTO LIBRO (nombre_libro, autor_libro, editorial, isbm, codigo_barras, cantidad, id_categoria, cant_disponibles, fecha_publicacion, fecha_creacion) VALUES( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-    updateLibro: 'UPDATE LIBRO SET nombre_libro = $1, autor_libro = $2, editorial = $3, isbm = $4, codigo_barras = $5, cantidad = $6, id_categoria = $7, cant_disponibles = $8, fecha_publicacion = $9 WHERE id_libro = $10',
-    deleteLibro: 'DELETE FROM LIBRO WHERE id_libro = $1',
+    updateLibro: 'UPDATE LIBRO SET nombre_libro = $1, autor_libro = $2, editorial = $3, isbm = $4, codigo_barras = $5, cantidad = $6, id_categoria = $7, fecha_publicacion = $8 WHERE id_libro = $9',
+    deleteLibro: 'delete from LIBRO where ID_LIBRO = $1',
+    selectNombreLibro: 'SELECT LB.ID_LIBRO, LB.NOMBRE_LIBRO, LB.AUTOR_LIBRO, LB.EDITORIAL , LB.ID_CATEGORIA , CT.DESCRIPCION AS CATEGORIA, LB.ISBM, LB.CODIGO_BARRAS, LB.CANTIDAD, LB.FECHA_PUBLICACION FROM LIBRO AS LB JOIN CATEGORIAS AS CT ON LB.ID_CATEGORIA = CT.ID_CATEGORIA WHERE LB.NOMBRE_LIBRO LIKE $1',
+    
 
-    selectCategorias: 'SELECT * FROM CATEGORIAS'
+    insertPrestamo: 'INSERT INTO PRESTAMOS (nombre_cliente, apellido_cliente, telefono_cliente, correo_cliente, direccion_cliente, edad_cliente, genero_cliente, grado_academico, estudiante, estado_prestamo, id_usuario) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, 1, 1) returning id_prestamo',
+    insertLibrosPrestados: 'INSERT INTO LIBROS_PRESTADOS (id_libro, id_prestamo, fecha_prestamo, fecha_estimada_retorno, condiciones_libro, id_estado, codigo_prestamo) VALUES($1, $2, $3, $4, $5, 1, $6)',
+    selectLibrosPrestados: 'select LP.codigo_prestamo ,LB.ID_LIBRO, LB.NOMBRE_LIBRO, (P.NOMBRE_CLIENTE || \' \' || P.APELLIDO_CLIENTE) as CLIENTE, LP.ID_ESTADO, LP.condiciones_devolucion, LP.FECHA_DEVOLUCION, LP.FECHA_PRESTAMO from libro as LB join libros_prestados as LP on LB.id_libro = LP.id_libro join prestamos as P on P.id_prestamo = LP.id_prestamo where LP.codigo_prestamo like $1 or lower(P.nombre_cliente)  like $1 or lower(P.apellido_cliente) like $1',
+    todosPrestados: 'select LP.codigo_prestamo ,LB.ID_LIBRO, LB.NOMBRE_LIBRO, (P.NOMBRE_CLIENTE || \' \' || P.APELLIDO_CLIENTE) as CLIENTE, LP.ID_ESTADO, LP.condiciones_devolucion, LP.FECHA_DEVOLUCION, LP.FECHA_PRESTAMO from libro as LB join libros_prestados as LP on LB.id_libro = LP.id_libro join prestamos as P on P.id_prestamo = LP.id_prestamo order by LP.fecha_prestamo DESC',
+    selectCategorias: 'SELECT * FROM CATEGORIAS',
+    update_estado_libro: 'update libros_prestados set id_estado = 2, condiciones_devolucion = $1, fecha_devolucion = $2 where id_libro = $3 and codigo_prestamo = $4'
 }
 
 module.exports = {
