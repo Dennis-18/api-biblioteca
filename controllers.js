@@ -30,8 +30,29 @@ const getLibros = (req, res) => {
     })
 }
 
+//insertar imagen en una tabla
+const guardarImagen =  (nombre_imagen,imagen) => {
+    return new Promise((resolve, reject) =>{
+        try{
+            pool.query(script.insertImagen,[nombre_imagen, imagen], (error, results) =>{
+                if(error){
+                    console.log('reject 1');
+                    reject();
+                }
+                if(results.rowCount > 0){
+                    console.log('resuelve');
+                    resolve(results.rows[0]);
+                }
+            })
+        } catch(error){
+            console.log('catch ' + error);
+        }
+    })
+}
+
+
 //insertar un libro
-const insertLibro = (req, res) => {
+const insertLibro = async (req, res) => {
     console.log('funcion insertLibro');
     const { nombre_libro,
         autor_libro,
@@ -42,7 +63,18 @@ const insertLibro = (req, res) => {
         id_categoria,
         cant_disponibles,
         fecha_publicacion,
-        fecha_creacion } = req.body;
+        fecha_creacion,
+        tomo_inicial,
+        tomo_final,
+        parte,
+        estado,
+        tipo_autor,
+        nombre_imagen,
+    codigo_interno, imagen} = req.body;
+
+        let {id_imagen} = await guardarImagen(nombre_imagen,imagen);
+        console.log(nombre_imagen);
+        console.log(id_imagen);
     pool.query(script.inserLibro, [nombre_libro,
         autor_libro,
         editorial,
@@ -52,10 +84,18 @@ const insertLibro = (req, res) => {
         id_categoria,
         cant_disponibles,
         fecha_publicacion,
-        fecha_creacion], (error, results) => {
+        fecha_creacion,
+        tomo_inicial,
+        tomo_final,
+        parte,
+        estado,
+        tipo_autor,
+        id_imagen,
+        codigo_interno], (error, results) => {
             if (error) {
                 console.log(script.inserLibro);
-                throw error;
+                // throw error;
+                res.json({id:0, mensaje:error});
             }
 
             res.json({ id: 1, mensaje: "Libro insertado correctamente" });
@@ -144,7 +184,8 @@ const selectNombreLibro = (req, res) => {
     // console.log(nombre_libro);
     pool.query(script.selectNombreLibro, ['%' + nombre_libro.toLowerCase() + '%'], (error, results) => {
         if (error) {
-            throw error;
+            // throw error;
+            res.json({id:0, mensaje: error});
         }
         // console.log(results.rows);
         res.status(200).json(results.rows);
@@ -153,13 +194,16 @@ const selectNombreLibro = (req, res) => {
 
 const insertPrestamo = async (req, res) => {
 
+    // console.log(req.body);
+
     const { cliente, libros } = req.body;
 
     // console.log(cliente);
     // console.log(libros);
 
     try {
-        await pool.query(script.insertPrestamo, [
+        // console.log(cliente);
+         pool.query(script.insertPrestamo, [
             cliente.nombre,
             cliente.apellido,
             cliente.telefono,
@@ -168,12 +212,14 @@ const insertPrestamo = async (req, res) => {
             cliente.edad,
             cliente.genero,
             cliente.grado,
-            cliente.estudiante], (error, results) => {
+            cliente.estudiante],async (error, results) => {
                 if (error) {
-                    throw error;
+                    console.log('error insert prestamo')
+                    // throw error;
+                    res.json({id:0, mensaje:error});
                 }
                 // console.log(results.rows);
-                let { id_prestamo } = results.rows[0];
+                let { id_prestamo } = await results.rows[0];
                 id_prestamoRetornado = id_prestamo;
                 // console.log(id_prestamo);
                 codigo_prestamo = year + '-' + id_prestamoRetornado;
@@ -189,7 +235,8 @@ const insertPrestamo = async (req, res) => {
                         codigo_prestamo
                     ], (err, result) => {
                         if (err) {
-                            throw err;
+                            console.log('error2 '+err);
+                            // throw err;
                         }
                         // console.log('exito');
                     })
@@ -253,6 +300,34 @@ const updateEstado = (req, res) => {
         res.json({id:1, mensaje: 'Actualizacion exitosa'});
     })
 }
+
+const prestadosPendientes = (req, res) => {
+    pool.query(script.prestadosPendientes, (error, results) => {
+        if(error){
+            res.json({id: 0, mensaje: 'Error al obtener los datos'});
+        }
+
+        if(results.rowCount > 0){
+            res.json({id: 1, mensaje: results.rows});
+        } else{
+            res.json({id: 2, mensaje: 'No hay registros'})
+        }
+    })
+}
+
+const prestadosRetornados = (req, res) => {
+    pool.query(script.prestadosRetornados, (error, results) => {
+        if(error){
+            res.json({id: 0, mensaje: 'Error al obtener los datos'});
+        }
+
+        if(results.rowCount > 0){
+            res.json({id: 1, mensaje: results.rows});
+        } else{
+            res.json({id: 2, mensaje: 'No hay registros'});
+        }
+    })
+}
 module.exports = {
     getCategorias,
     getLibros,
@@ -263,5 +338,7 @@ module.exports = {
     insertPrestamo,
     selectLibrosPrestados,
     prestamos,
-    updateEstado
+    updateEstado,
+    prestadosPendientes,
+    prestadosRetornados
 }

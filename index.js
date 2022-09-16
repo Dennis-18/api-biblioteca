@@ -6,7 +6,11 @@ const port = 3000;
 
 //archivo en donde estan las funciones que envian y reciben informacion de la base de datos
 const db = require('./controllers');
-
+const cliente = require('./cliente.module/cliente.routes');
+const etnias = require('./etnias.module/etnias.routes');
+const comunidades = require('./comunidades.module/comunidades.routes');
+const login = require('.//login.module/login.routes');
+const grado_academico = require('./grado-academico.module/grado.routes');
 app.use(bodyParser.json())
 app.use(
     bodyParser.urlencoded({
@@ -43,3 +47,17 @@ app.post('/librosPrestados', db.selectLibrosPrestados)
 app.get('/todosPrestados', db.prestamos)
 
 app.put('/updateEstadoLibro', db.updateEstado)
+
+app.get('/pendientes', db.prestadosPendientes)
+
+app.get('/retornados', db.prestadosRetornados)
+
+app.use(cliente);
+
+app.use(etnias);
+
+app.use(comunidades);
+
+app.use(login);
+
+app.use(grado_academico);
