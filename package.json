@@ -4,7 +4,8 @@
   "description": "api para biblioteca con bd postgres remota en heroku",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": [
     "start"
