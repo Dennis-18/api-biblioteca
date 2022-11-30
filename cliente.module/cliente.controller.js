@@ -72,14 +72,20 @@ const nuevoCliente = async (req, res) => {
         dpi_carnet,
         firma,
         visita_museo,
-        consulta_biblioteca
+        consulta_biblioteca,
+        nacionalidad,
+        pais
     } = req.body;
-    let id_etapa_vida = await etapaVida(edad);
+
+    //=========================================
+    // let id_etapa_vida = await etapaVida(edad);
+
+
     //  etapaVida(edad).then((res) =>{
     //     id_etapa_vida = res;
     // });
 
-    console.log(id_etapa_vida);
+    // console.log(id_etapa_vida);
     try{
         
         // buscarCliente(nombre, apellido).then((res) =>{
@@ -89,7 +95,9 @@ const nuevoCliente = async (req, res) => {
         console.log('respuesta buscarCliente ' + existe);
         if(existe == '1'){
             pool.query(clienteQuerys.query_update_cliente, [
-                direccion, telefono, correo, edad, genero, grado_academico, estudiante, etnia, comunidad, dpi_carnet, id_etapa_vida, nombre.toLowerCase(), apellido.toLowerCase()
+                direccion, telefono, correo, edad, genero, 
+                grado_academico, estudiante, etnia, comunidad, 
+                dpi_carnet, edad, nombre.toLowerCase(), apellido.toLowerCase()
             ], async (error, results) =>{
                 if(error){
                     res.json({id:0, mensaje: error});
@@ -110,7 +118,7 @@ const nuevoCliente = async (req, res) => {
                 nombre,
                 apellido, direccion, telefono,
                 correo, edad, genero, grado_academico,
-                estudiante, comunidad, etnia, dpi_carnet, id_etapa_vida
+                estudiante,etnia ,comunidad,  dpi_carnet, edad, nacionalidad, pais
             ], async (error, results) =>{
                 if(error){
                     res.json({id:0, mensaje: 'Error al ingresar el cliente', error: error});
@@ -140,13 +148,15 @@ const getCliente = (req, res) =>{
     try{
         pool.query(clienteQuerys.getCliente, [cliente.toLowerCase()], (error, results) =>{
             if(error){
+                console.log('error get cliente');
                 res.json({id:0, mensaje:error});
             }
             
             if(results.rowCount > 0){
-                
+                console.log('encuentra registros');
                 res.json({id:1, mensaje: results.rows});
             } else{
+                console.log('no encuentra cliente');
                 res.json({id:2, mensaje: 'No existen registros'});
             }
 
@@ -174,7 +184,55 @@ const visita = async (id_cliente, firma, fecha_visita, visita_museo, consulta_bi
     }
 }
 
+const etapas_vida = (req, res) => {
+    console.log('etapas de vida');
+    try{
+        pool.query(clienteQuerys.etapas_vida, (error, results) => {
+            if(error){
+                console.log('Error en query: ' + error);
+                res.json({id: 0, mensaje: error});
+            }
+            if(results){
+                if(results.rowCount > 0){
+                    res.json({id: 1, mensaje: results.rows});
+                } else{
+                    console.log('No hay resultados');
+                    res.json({id:2, mensaje: 'No hay resultados'});
+                }
+            }
+        })
+    } catch(error){
+        console.log('error catch: ' + error);
+        res.json({id:0, mensaje: error});
+    }
+}
+
+const nacionalidades = (req, res) => {
+    console.log('nacionalidades');
+    try{
+        pool.query(clienteQuerys.nacionalidades, (error, results) =>{
+            if(error){
+                console.log('error query: ' + error);
+                res.json({id:0, mensaje: error});
+            }
+
+            if(results){
+                if(results.rowCount > 0){
+                    res.json({id:1, mensaje: results.rows});
+                } else{
+                    res.json({id:0, mensaje: 'no hay resultados'});
+                    console.log('no hay resultados');
+                }
+            }
+        })
+    } catch(error){
+        console.log('error catch: ' + error);
+    }
+}
+
 module.exports = {
     nuevoCliente,
-    getCliente
+    getCliente,
+    etapas_vida,
+    nacionalidades
 }

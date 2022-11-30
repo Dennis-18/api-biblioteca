@@ -13,6 +13,8 @@ app.use(
 
 app.post('/cliente', controller.nuevoCliente)
 app.post('/getCliente', controller.getCliente);
+app.get('/etapas_vida', controller.etapas_vida)
+app.get('/nacionalidades', controller.nacionalidades)
 
 module.exports = app;
 

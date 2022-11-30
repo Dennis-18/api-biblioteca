@@ -3,6 +3,7 @@ const { pool } = require('./db-config');
 const { script } = require('./scripts');
 
 const { sendMail, enviarMail } = require('./mailService');
+const { query } = require('express');
 
 //variable fecha
 let fecha_actual = new Date();
@@ -17,7 +18,8 @@ const getLibros = (req, res) => {
     console.log('funcion getLibros');
     pool.query(script.selectLibros, (error, results) => {
         if (error) {
-            throw error;
+            // throw error;
+            res.json({id:0, mensaje: error});
         }
         if (results.rows == '') {
             res.json({ id: 3, mensaje: "No hay libros para mostrar" })
@@ -103,8 +105,27 @@ const insertLibro = async (req, res) => {
         })
 }
 
+//actualizar la imagen de un libro
+const update_imagen = async (id_libro, imagen) => {
+    return new Promise((resolve, reject) =>{
+
+        try{
+
+            pool.query(script.update_imagen, [imagen, id_libro], (error, results) =>{
+                if(error){
+                    reject("0");
+                } else{
+                    resolve("1");
+                }
+            })
+        } catch(error){
+
+        }
+    })
+}
+
 //update un libro
-const updateLibro = (req, res) => {
+const updateLibro = async (req, res) => {
 
     console.log('funcion updateLibro');
     const {
@@ -116,16 +137,48 @@ const updateLibro = (req, res) => {
         cantidad,
         id_categoria,
         fecha_publicacion,
-        id_libro } = req.body;
-    console.log(nombre_libro,
-        autor_libro,
-        editorial,
-        isbm,
-        codigo_barras,
-        cantidad,
-        id_categoria,
-        fecha_publicacion,
-        id_libro);
+        id_libro, imagen, tipo_autor,
+        tomo_inicial,
+        tomo_final,
+        parte,
+        estado,
+        codigo_interno} = req.body;
+    // console.log(nombre_libro,
+    //     autor_libro,
+    //     editorial,
+    //     isbm,
+    //     codigo_barras,
+    //     cantidad,
+    //     id_categoria,
+    //     fecha_publicacion,
+    //     id_libro);
+
+    // console.log('llega aqui');
+    
+    let respuesta = await update_imagen(id_libro, imagen);
+    if(respuesta == "0"){
+        //insertar imagen
+        console.log(respuesta);
+        res.json({id:3, mensaje: 'No se pudo actualizar la imagen'});
+    } 
+
+
+    // console.log('actualizo la imagen');
+
+    // console.log(        nombre_libro,
+    //     autor_libro,
+    //     editorial,
+    //     isbm,
+    //     codigo_barras,
+    //     cantidad,
+    //     id_categoria,
+    //     fecha_publicacion,
+    //     id_libro, tipo_autor,
+    //     tomo_inicial,
+    //     tomo_final,
+    //     parte,
+    //     estado,
+    //     codigo_interno)
     pool.query(script.updateLibro, [
         nombre_libro,
         autor_libro,
@@ -135,11 +188,13 @@ const updateLibro = (req, res) => {
         cantidad,
         id_categoria,
         fecha_publicacion,
-        id_libro], (error, results) => {
+        id_libro, tipo_autor, tomo_inicial, tomo_final, parte,
+        estado, codigo_interno, respuesta], (error, results) => {
             if (error) {
-                throw error;
+                // throw error;
+                res.json({id:0, mensaje: error});
             }
-
+            console.log('todo bien ');
             res.json({ id: 1, mensaje: "Libro actualizado correctamente" });
 
         })
@@ -154,7 +209,8 @@ const deleteLibro = (req, res) => {
     pool.query(script.deleteLibro, [id_libro], (error, results) => {
         if (error) {
             console.log('error delete libro');
-            throw error;
+            // throw error;
+            res.json({id:0, mensaje: error});
         }
 
         res.json({ id: 1, mensaje: "Libro eliminado con exito" });
@@ -166,7 +222,8 @@ const getCategorias = (req, res) => {
     console.log('funcion getCategorias');
     pool.query(script.selectCategorias, (error, results) => {
         if (error) {
-            throw error;
+            // throw error;
+            res.json({id:0, mensaje: error});
         }
 
         if (results.rows == '') {
@@ -179,16 +236,50 @@ const getCategorias = (req, res) => {
     })
 }
 
+const subsecciones = (req, res) => {
+    const {id_categoria} = req.params;
+
+    try{
+        pool.query(script.subsecciones, [id_categoria], (error, results) => {
+            if(error){
+                console.log(`Error query subsecciones: ${error}`);
+                res.json({id:0, mensaje: `Error query subsecciones: ${error}`});
+            }
+
+            if(results && results.rowCount > 0) {
+                res.json({id: 1, mensaje: results.rows});
+            }
+        })
+    } catch(error){
+        console.log(`Error catch subsecciones: ${error}`);
+        res.json({id:0, mensaje:`Error catch subsecciones: ${error}`})
+    }
+}
+
 const selectNombreLibro = (req, res) => {
     const { nombre_libro } = req.params;
-    // console.log(nombre_libro);
+    console.log(nombre_libro);
     pool.query(script.selectNombreLibro, ['%' + nombre_libro.toLowerCase() + '%'], (error, results) => {
         if (error) {
             // throw error;
+            console.log('error select nombre libro: ' + error);
             res.json({id:0, mensaje: error});
         }
         // console.log(results.rows);
-        res.status(200).json(results.rows);
+        if(results){
+            console.log('existe results');
+            // console.table(results.rows);
+            if(results.rowCount > 0){
+                console.log('results es mayor a 0');
+                res.status(200).json({id:1, mensaje:results.rows});
+            } else{
+                console.log('results es menor a 0');
+                res.json({id:2, mensaje: 'No hay registrto'});
+            }
+        } else{
+            console.log('no existe results');
+            res.json({id:2, mensaje: 'no hay registros'});
+        }
     })
 };
 
@@ -235,8 +326,9 @@ const insertPrestamo = async (req, res) => {
                         codigo_prestamo
                     ], (err, result) => {
                         if (err) {
-                            console.log('error2 '+err);
+                            console.log('error2 '+ err);
                             // throw err;
+                            res.json({id:0, mensaje: err});
                         }
                         // console.log('exito');
                     })
@@ -270,7 +362,8 @@ const selectLibrosPrestados = async (req, res) =>{
     // console.log(codigo_prestamo);
     await pool.query(script.selectLibrosPrestados,['%' + codigo_prestamo + '%'], (error, results) =>{
         if(error){
-            throw error;
+            // throw error;
+            res.json({id:0, mensaje: error});
         }
 
         //  console.log(results.rows);
@@ -283,7 +376,7 @@ const prestamos = (req, res) => {
     console.log('todos los libros prestados');
     pool.query(script.todosPrestados, (error, results) =>{
         if(results.rowCount > 0){
-            res.json({id: 1, data: results.rows})
+            res.json({id: 1, mensaje: results.rows})
         }
         if(error){
             res.json({id:0, mensaje: error})
@@ -328,6 +421,46 @@ const prestadosRetornados = (req, res) => {
         }
     })
 }
+
+categoriasPadre = (req, res) => {
+    console.log('categoriasPadre')
+    try{
+        pool.query(script.categoriasPadre, (error,results) => {
+            if(error){
+                console.log(`Error query categoriasPadre: ${error}`);
+                res.json({id:0, mensaje:`Error query categoriasPadre: ${error}`});
+            }
+
+            if(results && results.rowCount > 0){
+                res.json({id: 1, mensaje: results.rows});
+            }
+        })
+
+    } catch(error) {
+        console.log(`Error catch categoriasPadre: ${error}`);
+        res.json({id:0, mensaje: `Error catch categoriasPadre: ${error}`})
+    }
+}
+
+libroCategoria = (req, res) => {
+    console.log('libroCategoria');
+    const {id_categoria} = req.params;
+    try{
+        pool.query(script.libroCategoria, [id_categoria], (error, results) => {
+            if(error){
+                console.log(`Error en query libroCategoria: ${error}`);
+                res.json({id:0, mensaje: `Error en query libroCategoria: ${error}`});
+            }
+
+            if(results && results.rowCount > 0){
+                res.json({id:1, mensaje: results.rows});
+            }
+        })
+    } catch(error){
+        console.log(error);
+        res.json({id:0, mensaje: `Error catch libroCategoria: ${error}`});
+    }
+}
 module.exports = {
     getCategorias,
     getLibros,
@@ -340,5 +473,8 @@ module.exports = {
     prestamos,
     updateEstado,
     prestadosPendientes,
-    prestadosRetornados
+    prestadosRetornados,
+    categoriasPadre,
+    libroCategoria,
+    subsecciones
 }
